@@ -4,9 +4,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import os
 
 TOKEN = os.getenv("7871181641:AAECAlUG47815PoZZnYfXpF5DgHOcNwQ7YE")
-if not TOKEN:
-    print("❌ ERROR: TELEGRAM_TOKEN is not set!")
-    exit()
+
 
 print("✅ Bot token loaded successfully.")
 
@@ -21,7 +19,9 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text("⚠️ Error fetching price.")
 
-
+if not TOKEN:
+    print("❌ ERROR: TELEGRAM_TOKEN is not set!")
+    exit()
 
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
