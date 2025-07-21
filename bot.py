@@ -1,28 +1,23 @@
-import os
 import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import os
 
-TELEGRAM_TOKEN = os.getenv("7871181641:AAECAlUG47815PoZZnYfXpF5DgHOcNwQ7YE")
+TOKEN = os.getenv("7871181641:AAECAlUG47815PoZZnYfXpF5DgHOcNwQ7YE")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Welcome! Send /price to get the current Bitcoin price.")
+    await update.message.reply_text("Welcome! Send /price to get BTC price.")
 
 async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        url = "https://api.coindesk.com/v1/bpi/currentprice/BTC.json"
-        response = requests.get(url)
-        data = response.json()
-        price = data["bpi"]["USD"]["rate"]
-        await update.message.reply_text(f"💰 Current Bitcoin Price: ${price}")
+        response = requests.get("https://api.coindesk.com/v1/bpi/currentprice/BTC.json")
+        btc_price = response.json()["bpi"]["USD"]["rate"]
+        await update.message.reply_text(f"🟡 BTC price: ${btc_price}")
     except Exception as e:
-        await update.message.reply_text("Error fetching Bitcoin price.")
+        await update.message.reply_text("⚠️ Error fetching price.")
 
-def main():
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("price", price))
-    app.run_polling()
+app = ApplicationBuilder().token(TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("price", price))
 
-if __name__ == "__main__":
-    main()
+app.run_polling()
