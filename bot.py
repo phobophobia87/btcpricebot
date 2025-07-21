@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import os
 
-TOKEN = os.getenv("7871181641:AAECAlUG47815PoZZnYfXpF5DgHOcNwQ7YE")
+TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 
 print("✅ Bot token loaded successfully.")
