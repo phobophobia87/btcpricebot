@@ -2,6 +2,7 @@ import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import os
+from telegram import Bot
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 bot = Bot(token=TOKEN)
