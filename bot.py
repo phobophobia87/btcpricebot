@@ -5,13 +5,18 @@ import os
 from telegram import Bot
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
-bot = Bot(token=TOKEN)
-bot.delete_webhook(drop_pending_updates=True)
-updates = bot.get_updates()
-print(f"Cleared {len(updates)} pending updates")
+
 if not TOKEN:
     print("❌ ERROR: TELEGRAM_TOKEN is not set!")
     exit()
+
+async def clear_updates():
+    bot = Bot(token=TOKEN)
+    await bot.delete_webhook(drop_pending_updates=True)
+    updates = await bot.get_updates()
+    print(f"Cleared {len(updates)} pending updates")
+
+asyncio.run(clear_updates())
 
 print("✅ Bot token loaded successfully.")
 
