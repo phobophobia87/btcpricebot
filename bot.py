@@ -4,7 +4,10 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import os
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
-
+bot = Bot(token=TOKEN)
+bot.delete_webhook(drop_pending_updates=True)
+updates = bot.get_updates()
+print(f"Cleared {len(updates)} pending updates")
 if not TOKEN:
     print("❌ ERROR: TELEGRAM_TOKEN is not set!")
     exit()
