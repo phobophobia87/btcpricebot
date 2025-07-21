@@ -3,6 +3,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import os
 from telegram import Bot
+import asyncio
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 
