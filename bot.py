@@ -25,14 +25,14 @@ async def start(update: Update, context):
     """Sends a message when the command /start is issued."""
     user = update.effective_user
     await update.message.reply_html(
-        f"Hi {user.mention_html()}! I'm a bot that can give you cryptocurrency prices. "
+        f"Hi {user.mention_html()}! I'm a bot that can give you cryptocurrency prices and 24h changes. "
         "Try typing /prices."
     )
     logger.info(f"User {user.full_name} ({user.id}) started the bot.")
 
 async def get_crypto_prices(update: Update, context):
-    """Sends the current prices for multiple cryptocurrencies when the command /prices is issued."""
-    logger.info("Received /prices command. Fetching cryptocurrency prices...")
+    """Sends the current prices and 24h changes for multiple cryptocurrencies when the command /prices is issued."""
+    logger.info("Received /prices command. Fetching cryptocurrency prices and 24h changes...")
     
     # Define the cryptocurrencies and their CoinGecko IDs
     cryptos = {
@@ -51,8 +51,8 @@ async def get_crypto_prices(update: Update, context):
 
     for attempt in range(max_retries):
         try:
-            # Using CoinGecko API to get prices for multiple coins
-            url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin_ids}&vs_currencies=usd"
+            # Using CoinGecko API to get prices for multiple coins, including 24hr change
+            url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin_ids}&vs_currencies=usd&include_24hr_change=true"
             response = requests.get(url)
             response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
             data = response.json()
@@ -62,7 +62,15 @@ async def get_crypto_prices(update: Update, context):
                 if cg_id in data and "usd" in data[cg_id]:
                     price = data[cg_id]["usd"]
                     formatted_price = f"{price:,.2f}"
-                    price_messages.append(f"{name}: ${formatted_price}")
+                    
+                    change_24h = data[cg_id].get("usd_24h_change") # Use .get() to safely access
+                    
+                    change_str = ""
+                    if change_24h is not None:
+                        # Format the change with a +/- sign and 2 decimal places
+                        change_str = f" ({change_24h:+.2f}%)"
+                        
+                    price_messages.append(f"{name}: ${formatted_price}{change_str}")
                 else:
                     price_messages.append(f"{name}: Price not available")
 
@@ -125,7 +133,6 @@ def main():
 
     # Register handlers
     application.add_handler(CommandHandler("start", start))
-    # Changed from /price to /prices
     application.add_handler(CommandHandler("prices", get_crypto_prices)) 
 
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
