@@ -18,13 +18,21 @@ if not TOKEN:
     logger.error("❌ ERROR: TELEGRAM_TOKEN is not set!")
     exit()
 
-async def start(update: Update, context):
-    """Sends a message when the command /start is issued."""
-    user = update.effective_user
-    await update.message.reply_html(
-        f"Hi {user.mention_html()}! I'm a bot that can give you Bitcoin prices. "
-        "Try typing /price."
-    )
+async def get_btc_price(update: Update, context):
+    """Sends the current Bitcoin price when the command /price is issued."""
+    try:
+        # Using CoinGecko API as an alternative
+        response = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd")
+        response.raise_for_status()
+        data = response.json()
+        price = data["bitcoin"]["usd"]
+        await update.message.reply_text(f"The current price of Bitcoin (USD) is: ${price}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching Bitcoin price: {e}")
+        await update.message.reply_text("Sorry, I couldn't retrieve the Bitcoin price at the moment. Please try again later.")
+    except KeyError:
+        logger.error("Unexpected API response format for Bitcoin price.")
+        await update.message.reply_text("Sorry, there was an issue parsing the Bitcoin price data. Please try again later.")
 
 async def get_btc_price(update: Update, context):
     """Sends the current Bitcoin price when the command /price is issued."""
