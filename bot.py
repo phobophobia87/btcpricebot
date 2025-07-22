@@ -1,21 +1,76 @@
 import os
 import asyncio
-from telegram import Bot
-from telegram.error import TelegramError
+import logging
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
+import requests
 
+# Enable logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Get the Telegram Token from environment variables
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 if not TOKEN:
-    print("❌ ERROR: TELEGRAM_TOKEN is not set!")
+    logger.error("❌ ERROR: TELEGRAM_TOKEN is not set!")
     exit()
 
-async def clear_updates():
-    bot = Bot(token=TOKEN)
-    try:
-        await bot.delete_webhook(drop_pending_updates=True)
-        updates = await bot.get_updates()
-        print(f"Cleared {len(updates)} pending updates")
-    except TelegramError as e:
-        print(f"Telegram API error: {e}")
+async def start(update: Update, context):
+    """Sends a message when the command /start is issued."""
+    user = update.effective_user
+    await update.message.reply_html(
+        f"Hi {user.mention_html()}! I'm a bot that can give you Bitcoin prices. "
+        "Try typing /price."
+    )
 
-asyncio.run(clear_updates())
+async def get_btc_price(update: Update, context):
+    """Sends the current Bitcoin price when the command /price is issued."""
+    try:
+        response = requests.get("https://api.coindesk.com/v1/bpi/currentprice.json")
+        response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+        data = response.json()
+        price = data["bpi"]["USD"]["rate"]
+        await update.message.reply_text(f"The current price of Bitcoin (USD) is: ${price}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching Bitcoin price: {e}")
+        await update.message.reply_text("Sorry, I couldn't retrieve the Bitcoin price at the moment. Please try again later.")
+    except KeyError:
+        logger.error("Unexpected API response format for Bitcoin price.")
+        await update.message.reply_text("Sorry, there was an issue parsing the Bitcoin price data. Please try again later.")
+
+async def echo(update: Update, context):
+    """Echo the user message."""
+    await update.message.reply_text(update.message.text)
+
+async def error_handler(update: object, context):
+    """Log the error and send a message to the user."""
+    logger.warning(f"Update {update} caused error {context.error}")
+    await update.message.reply_text("Sorry, an error occurred while processing your request.")
+
+def main():
+    """Start the bot."""
+    application = Application.builder().token(TOKEN).build()
+
+    # Register handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("price", get_btc_price))
+
+    # On non-command messages, echo the user message (optional, you can remove this)
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+
+    # Error handler
+    application.add_error_handler(error_handler)
+
+    # Run the bot until the user presses Ctrl-C
+    # For Railway, you typically don't want to use polling in production.
+    # Instead, you'd set up a webhook. However, for simple cases, polling
+    # can work if Railway keeps the process alive.
+    # Given your Procfile, Railway expects a long-running process.
+    logger.info("Bot is starting polling...")
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+if __name__ == "__main__":
+    main()
