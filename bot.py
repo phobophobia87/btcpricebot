@@ -151,4 +151,37 @@ async def get_crypto_prices(update: Update, context):
 
 async def echo(update: Update, context):
     """Echo the user message. This handler responds to any non-command text."""
-    logger.info(f"Received message from {update.effective_user.full_name} ({update.effective_user.id}): {update.message.
+    # Corrected line: added .text and closed the f-string with "
+    logger.info(f"Received message from {update.effective_user.full_name} ({update.effective_user.id}): {update.message.text}")
+    await update.message.reply_text(update.message.text)
+
+async def error_handler(update: object, context):
+    """Log the error and send a message to the user."""
+    logger.error(f"Exception while handling an update:", exc_info=context.error)
+    if update and update.effective_message:
+        await update.effective_message.reply_text(
+            "Oops! Something went wrong on my end. Please try again later."
+        )
+
+def main():
+    """Start the bot."""
+    if not TOKEN:
+        logger.critical("TELEGRAM_TOKEN is not set. Cannot start the bot. Exiting.")
+        return
+
+    application = Application.builder().token(TOKEN).build()
+
+    # Register handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("prices", get_crypto_prices)) 
+
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    application.add_error_handler(error_handler)
+
+    logger.info("Bot is starting polling...")
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    logger.info("Bot polling stopped.")
+
+
+if __name__ == "__main__":
+    main()
