@@ -19,7 +19,6 @@ TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 if not TOKEN:
     logger.error("❌ ERROR: TELEGRAM_TOKEN is not set!")
-    # The Application.builder() will raise an error anyway if TOKEN is None.
 
 async def start(update: Update, context):
     """Sends a message when the command /start is issued."""
@@ -34,16 +33,16 @@ async def get_crypto_prices(update: Update, context):
     """Sends the current prices and 24h changes for multiple cryptocurrencies when the command /prices is issued."""
     logger.info("Received /prices command. Fetching cryptocurrency prices and 24h changes...")
     
-    # Define the cryptocurrencies and their CoinGecko IDs
+    # Define the cryptocurrencies with their desired output symbol and CoinGecko ID
     cryptos = {
-        "Bitcoin": "bitcoin",
-        "Aptos": "aptos",
-        "PancakeSwap (CAKE)": "pancakeswap-token",
-        "The Sandbox (SAND)": "the-sandbox",
-        "Immutable X (IMX)": "immutable-x"
+        "btc": "bitcoin",
+        "apt": "aptos",
+        "cake": "pancakeswap-token",
+        "sand": "the-sandbox",
+        "imx": "immutable-x"
     }
     
-    # Create a comma-separated string of IDs for the API request
+    # Create a comma-separated string of CoinGecko IDs for the API request
     coin_ids = ",".join(cryptos.values())
     
     max_retries = 5
@@ -58,21 +57,23 @@ async def get_crypto_prices(update: Update, context):
             data = response.json()
 
             price_messages = []
-            for name, cg_id in cryptos.items():
+            # Iterate through the cryptos dictionary to get the desired symbol and CoinGecko ID
+            for symbol, cg_id in cryptos.items():
                 if cg_id in data and "usd" in data[cg_id]:
                     price = data[cg_id]["usd"]
                     formatted_price = f"{price:,.2f}"
                     
-                    change_24h = data[cg_id].get("usd_24h_change") # Use .get() to safely access
+                    change_24h = data[cg_id].get("usd_24h_change")
                     
                     change_str = ""
                     if change_24h is not None:
-                        # Format the change with a +/- sign and 2 decimal places
                         change_str = f" ({change_24h:+.2f}%)"
                         
-                    price_messages.append(f"{name}: ${formatted_price}{change_str}")
+                    # Format the output using the symbol from the dictionary
+                    price_messages.append(f"{symbol.upper()}: ${formatted_price}{change_str}")
                 else:
-                    price_messages.append(f"{name}: Price not available")
+                    # If price not available, still show the symbol
+                    price_messages.append(f"{symbol.upper()}: Price not available")
 
             # Join all price messages into one string
             full_message = "Current Cryptocurrency Prices (USD):\n" + "\n".join(price_messages)
