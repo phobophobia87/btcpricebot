@@ -40,7 +40,7 @@ async def get_crypto_prices(update: Update, context):
         "cake": "pancakeswap-token",
         "sand": "the-sandbox",
         "imx": "immutable-x",
-        "rndr": "render-token" # Added Render Token
+        "RENDER": "RENDER" # Added Render Token
     }
     
     # Create a comma-separated string of CoinGecko IDs for the API request
